@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["accessToken", "tokenType"],
+  "properties": {
+    "accessToken": {
+      "type": "string",
+      "minLength": 20
+    },
+    "tokenType": {
+      "type": "string",
+      "enum": ["Bearer"]
+    }
+  },
+  "additionalProperties": false
+}

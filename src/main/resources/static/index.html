@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management Service</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Management Service</h1>
+        
+        <div class="form-container">
+            <h2>Add New User</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="error-message" id="emailError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                    <button type="button" class="btn btn-secondary" id="checkUserBtn">Validate Credentials</button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="responseMessage" class="response-message"></div>
+    </div>
+    
+    <script src="js/script.js"></script>
+</body>
+</html> 

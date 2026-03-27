@@ -1,0 +1,13 @@
+.git
+.github
+.gradle
+.env
+.env.*
+build
+out
+*.log
+*.tmp
+README.md
+observability
+agent-transcripts
+terminals

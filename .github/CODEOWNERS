@@ -1,0 +1,20 @@
+# Repository owner
+* @writetogowthami
+
+# Application code
+/src/main/java/ @writetogowthami
+/src/main/resources/ @writetogowthami
+
+# Infrastructure
+/docker/ @writetogowthami
+/docker-compose.yml @writetogowthami
+/Dockerfile @writetogowthami
+
+# CI/CD
+/.github/workflows/ @writetogowthami
+
+# Observability
+/observability/ @writetogowthami
+
+# Documentation
+/README.md @writetogowthami

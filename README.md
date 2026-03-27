@@ -1,4 +1,4 @@
-# User Management Service
+<h1 align="center">User Management Service</h1>
 
 <p align="center">
   <strong> Secure user management • Stateless authentication • End-to-end observability</strong>
@@ -629,8 +629,8 @@ This removes local PostgreSQL volumes, resets persisted data and reapplies initi
 
 ## Secrets Management
 
-- Local development uses `.env.example` as the template and `.env` for local values only.
-- `.env` is intended for local development only and must not be committed to source control.
+- `.env.example` lists variable names and safe defaults only (empty secrets use Docker Compose local-dev fallbacks). Copy to `.env` and set real values for anything beyond your machine.
+- `.env` is for local overrides only and must not be committed to source control.
 - Production secrets are managed in a secret manager (GitHub Secrets, Vault, cloud-managed secrets).
 - Runtime secrets are injected during deployment and are never stored in source control.
 
@@ -638,8 +638,8 @@ This removes local PostgreSQL volumes, resets persisted data and reapplies initi
 
 | Variable | Purpose | Example / Notes |
 |----------|---------|-----------------|
-| `JWT_SECRET` | Base64-encoded signing secret for JWT tokens | Example: 32+ byte key encoded in Base64 |
-| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | PostgreSQL container initialization values | Used by the `postgres` service in local stack |
+| `JWT_SECRET` | Base64-encoded signing secret for JWT tokens (≥32 decoded bytes) | Generate with e.g. `openssl rand -base64 32`; omit or leave empty in `.env` to use Compose local default |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | PostgreSQL container initialization values | Used by the `postgres` service; empty password in `.env` uses Compose local default |
 | `APP_DB_USERNAME` / `APP_DB_PASSWORD` | Runtime application database credentials | Must match PostgreSQL init user credentials |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins | Example: `http://localhost:3000,http://localhost:8080` |
 | `TRACING_SAMPLING_PROBABILITY` | Fraction of requests traced | Range `0.0` to `1.0` |

@@ -1,0 +1,125 @@
+# Local development only. Defaults below are not for production or shared environments.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: user-management-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-user_management}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      # Dev-only default; set POSTGRES_PASSWORD in .env for anything non-local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      APP_DB_USERNAME: ${APP_DB_USERNAME:-app_user}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-app_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-user_management}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-management-app
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_management}
+      DB_USERNAME: ${APP_DB_USERNAME:-app_user}
+      DB_PASSWORD: ${APP_DB_PASSWORD:-app_password}
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_management}
+      FLYWAY_USER: ${FLYWAY_USER:-postgres}
+      FLYWAY_PASSWORD: ${FLYWAY_PASSWORD:-postgres}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      # Dev-only JWT default (32+ byte key, base64). Override via .env for real deployments.
+      JWT_SECRET: ${JWT_SECRET:-c3VwZXItc2VjdXJlLWRldl9qd3Rfc2VjcmV0X2tleV8zMl9ieXRlcw==}
+      APP_LOG_FILE: /var/log/app/user-management-service.log
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318/v1/traces
+      TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-1.0}
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_logs:/var/log/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      tempo:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: user-management-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - app
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: user-management-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      # Dev-only; set GRAFANA_ADMIN_PASSWORD in .env for non-local use
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: user-management-tempo
+    restart: unless-stopped
+    command:
+      - "-config.file=/etc/tempo/tempo.yml"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+    ports:
+      - "3200:3200"
+      - "4318:4318"
+
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: user-management-loki
+    restart: unless-stopped
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    container_name: user-management-promtail
+    restart: unless-stopped
+    command:
+      - "-config.file=/etc/promtail/promtail-config.yml"
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - app_logs:/var/log/app:ro
+    depends_on:
+      - loki
+      - app
+
+volumes:
+  postgres_data:
+  app_logs:
